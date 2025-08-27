@@ -46,11 +46,11 @@ A premium, feature-rich implementation of the classic Reversi (Othello) board ga
 1. **Download the Game**:
    ```bash
    # Clone or download the repository
-   # Copy "Reversi Supreme - Pro.html" to your desired location
+   # Copy "Reversi Supreme.html" to your desired location
    ```
 
 2. **Launch the Game**:
-   - Open `Reversi Supreme - Pro.html` in your web browser
+   - Open `Reversi Supreme.html` in your web browser
    - No additional installation required!
 
 ### Quick Start
@@ -144,7 +144,7 @@ Have the most pieces of your color on the board when the game ends.
 
 ### Code Structure
 ```
-Reversi Supreme - Pro.html
+Reversi Supreme.html
 ├── HTML Structure
 │   ├── Game container and layout
 │   ├── Setup screen
@@ -197,6 +197,6 @@ This project is open source and available under the MIT License.
 
 ## 🎮 Enjoy Playing!
 
-Reversi Supreme - Pro offers hours of strategic gameplay with beautiful visuals and challenging AI opponents. Whether you're a beginner learning the basics or an expert honing your skills, this implementation provides the perfect platform for mastering the game of Reversi!
+Reversi Supreme offers hours of strategic gameplay with beautiful visuals and challenging AI opponents. Whether you're a beginner learning the basics or an expert honing your skills, this implementation provides the perfect platform for mastering the game of Reversi!
 
 **Happy gaming!** 🎯
