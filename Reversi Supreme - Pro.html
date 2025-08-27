@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reversi Supreme</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        :root {
+            --primary-color: #006400;
+            --secondary-color: #004d00;
+            --background-color: #f0f0f0;
+            --panel-color: #2d2d2d;
+            --button-color: #008CBA;
+            --button-hover: #005f7f;
+            --text-color: white; /* Default for dark panels */
+            --board-border: #222;
+            --cell-stroke: #000;
+            --hint-color: rgba(255, 255, 0, 0.4);
+            --highlight-color: rgba(144, 238, 144, 0.6);
+            --invalid-color: rgba(255, 0, 0, 0.4);
+            --modal-bg: white;
+            --modal-text: #333;
+            --modal-shadow: rgba(0, 0, 0, 0.7);
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --score-bg: rgba(0, 0, 0, 0.2);
+            --timer-bg: rgba(0, 0, 0, 0.2);
+            --timer-warning-bg: rgba(255, 0, 0, 0.3);
+            --timer-warning-pulse: rgba(255, 0, 0, 0.5);
+            --status-bg: rgba(0, 0, 0, 0.2);
+            --pass-bg: rgba(255, 165, 0, 0.3);
+            --pass-pulse: rgba(255, 165, 0, 0.5);
+            --select-bg: #f0f0f0;
+            --select-hover: #e0e0e0;
+            --select-border: #ccc;
+            --stat-value-color: #008CBA;
+            --stat-border: #eee;
+            --toggle-bg: #ccc;
+            --toggle-checked-bg: #2196F3;
+            --toggle-slider: white;
+            --progress-bg: #ddd;
+            --progress-bar-bg: #4CAF50;
+            --v1-body-gradient-start: #1f4037;
+            --v1-body-gradient-end: #99f2c8;
+            --v1-board-bg-container: #059669; /* For board container area styling */
+            --v1-board-bg-svg: #047857;    /* SVG background, acts as grid lines color */
+            --v1-cell-bg: #10b981;
+            --v1-cell-border-stroke: #059669; /* Stroke for SVG cells */
+            
+            --v1-piece-black-grad-start: #374151;
+            --v1-piece-black-grad-end: #000000;
+            --v1-piece-black-stroke: #4b5563;
+
+            --v1-piece-white-grad-start: #fefefe; /* Slightly off-white for better gradient */
+            --v1-piece-white-grad-end: #e9e9e9; /* Was #f3f4f6 */
+            --v1-piece-white-stroke: #d1d5db;
+
+            --v1-piece-sheen-start: rgba(255,255,255,0.35);
+            --v1-piece-sheen-end: rgba(255,255,255,0);
+
+            --v1-header-text: white;
+            --v1-header-shadow: rgba(0,0,0,0.3);
+            --v1-info-text-light: #a7f3d0;
+
+            /* These will define piece fills for easy JS update */
+            --piece-black-fill: url(#gradBlackPiece);
+            --piece-white-fill: url(#gradWhitePiece);
+            --piece-black-stroke-color: var(--v1-piece-black-stroke);
+            --piece-white-stroke-color: var(--v1-piece-white-stroke);
+
+            --cell-valid-move-indicator: #fbbf24; /* V1 yellow for valid move dots */
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--v1-body-gradient-start), var(--v1-body-gradient-end));
+            overflow-x: hidden;
+            padding: 10px 0;
+            box-sizing: border-box;
+            color: var(--v1-header-text); /* Default text color for body inspired by V1 */
+        }
+
+        body.dark-theme {
+            /* Adjust V1 gradients for dark mode or use V2's darker solid bg */
+            --v1-body-gradient-start: #121212; /* Darker gradient for dark mode */
+            --v1-body-gradient-end: #1f2937;   /* Dark bluish gray */
+            
+            --primary-color: #004d00;
+            --secondary-color: #003300;
+            /* --background-color: #1a1a1a; /* V2 dark bg, now overridden by gradient */
+            --panel-color: #2a2a2a; /* Slightly adjusted dark panel */
+            --board-border: #444;
+            --text-color: #f0f0f0; /* General light text for dark mode */
+            
+            /* V1 inspired colors in dark mode */
+            --v1-board-bg-container: #003c2a;
+            --v1-board-bg-svg: #002f21;
+            --v1-cell-bg: #0c8660;
+            --v1-cell-border-stroke: #003c2a;
+
+            --v1-piece-black-grad-start: #4a5568; /* Lighter black for dark bg */
+            --v1-piece-black-grad-end: #1a202c;
+            --v1-piece-black-stroke: #718096;
+
+            --v1-piece-white-grad-start: #e2e8f0;
+            --v1-piece-white-grad-end: #a0aec0; /* Darker white for contrast */
+            --v1-piece-white-stroke: #cbd5e0;
+            
+            --v1-piece-sheen-start: rgba(255,255,255,0.25); /* Subtler sheen */
+
+            --v1-header-text: #e5e7eb;
+            --v1-info-text-light: #86efac; /* Lighter green accent */
+
+
+            /* Update piece fill variables for dark theme */
+            --piece-black-fill: url(#gradBlackPieceDark);
+            --piece-white-fill: url(#gradWhitePieceDark);
+            --piece-black-stroke-color: var(--v1-piece-black-stroke);
+            --piece-white-stroke-color: var(--v1-piece-white-stroke);
+
+
+            --hint-color: rgba(255, 255, 100, 0.5);
+            --highlight-color: rgba(100, 255, 100, 0.6);
+            --invalid-color: rgba(255, 80, 80, 0.6);
+            --modal-bg: #3a3a3a;
+            --modal-text: #e0e0e0;
+            --score-bg: rgba(255, 255, 255, 0.08);
+            --timer-bg: rgba(255, 255, 255, 0.08);
+            --status-bg: rgba(255, 255, 255, 0.08);
+            --select-bg: #4a4a4a;
+            --select-hover: #5a5a5a;
+            --select-border: #6a6a6a;
+            --stat-value-color: #60a5fa; /* Lighter blue */
+            --stat-border: #555;
+            --toggle-bg: #555;
+            --toggle-checked-bg: #007acc;
+            --progress-bg: #555;
+        }
+        /* Consolidated dark theme text colors */
+        body.dark-theme h1,
+        body.dark-theme #game-container p,
+        body.dark-theme #setup-screen p,
+        body.dark-theme .option-label,
+        body.dark-theme .scoreboard,
+        body.dark-theme #turn-timer,
+        body.dark-theme .status-message,
+        body.dark-theme .pass-notification,
+        body.dark-theme .end-game-message,
+        body.dark-theme .score-item {
+            color: var(--text-color);
+        }
+
+        /* Consolidated dark theme form elements */
+        body.dark-theme select {
+            color: var(--text-color);
+            background-color: var(--select-bg);
+            border-color: var(--select-border);
+        }
+        body.dark-theme .select-wrapper::after { color: #aaa; }
+
+        /* Consolidated dark theme modal styles */
+        body.dark-theme .modal h2 { color: #f0f0f0; border-bottom-color: #555; }
+        body.dark-theme .modal p, body.dark-theme .modal ul { color: #d0d0d0; }
+        body.dark-theme .modal .modal-close { color: #bbb; }
+        body.dark-theme .modal .modal-close:hover { color: #fff; }
+
+        /* Consolidated dark theme statistics styles */
+        body.dark-theme .stat-label { color: #bbb; }
+        body.dark-theme .stat-item { border-bottom-color: var(--stat-border); }
+
+
+        #game-container {
+            text-align: center;
+            background-color: var(--panel-color);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            max-width: 95%;
+            width: 480px;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            color: var(--text-color);
+        }
+
+        h1 {
+            color: var(--v1-header-text);
+            font-size: 2.8em;
+            font-weight: bold;
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px var(--v1-header-shadow);
+        }
+
+        /* Consolidated paragraph text colors */
+        #game-container p,
+        #setup-screen p {
+            color: var(--v1-info-text-light);
+        }
+
+
+        .hidden { display: none !important; }
+
+        .highlight-cell {
+            fill: var(--highlight-color) !important;
+            cursor: pointer;
+            transition: fill 0.2s ease;
+        }
+        .highlight-cell:hover {
+            fill: rgba(144, 238, 144, 0.8) !important;
+        }
+        .valid-move-indicator {
+            fill: var(--cell-valid-move-indicator);
+            r: calc(var(--CELL_SIZE_VAR) * 0.12); /* Relative to cell size */
+            opacity: 0.8;
+            animation: pulse-indicator 2s infinite;
+            pointer-events: none;
+        }
+        @keyframes pulse-indicator {
+            0%, 100% { opacity: 0.9; r: calc(var(--CELL_SIZE_VAR) * 0.12); }
+            50% { opacity: 0.5; r: calc(var(--CELL_SIZE_VAR) * 0.1); }
+        }
+
+
+        .hint-marker {
+            fill: var(--hint-color);
+            stroke: yellow;
+            stroke-width: 1px;
+            opacity: 0.7;
+            pointer-events: none;
+            animation: pulse-hint 1.5s infinite alternate;
+        }
+        @keyframes pulse-hint {
+            from { opacity: 0.4; } to { opacity: 0.8; }
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 15px 0;
+            padding: 10px 15px;
+            background-color: var(--score-bg);
+            border-radius: 10px;
+            font-size: 1.2em;
+            color: var(--text-color);
+        }
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: inherit;
+        }
+        .score-circle {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: inset 0 1px 1px rgba(0,0,0,0.2), 0 1px 1px rgba(255,255,255,0.2);
+        }
+        .black-circle { background: var(--v1-piece-black-grad-end); border: 1px solid var(--v1-piece-black-stroke); }
+        .white-circle { background: var(--v1-piece-white-grad-start); border: 1px solid var(--v1-piece-white-stroke); }
+        body.dark-theme .black-circle { background: var(--v1-piece-black-grad-start); border-color: var(--v1-piece-black-stroke); }
+        body.dark-theme .white-circle { background: var(--v1-piece-white-grad-end); border-color: var(--v1-piece-white-stroke); }
+
+
+        #game-board { /* SVG container */
+            display: block;
+            margin: 20px auto; /* More margin */
+            max-width: 100%;
+            height: auto;
+            border: 3px solid var(--board-border); /* Thicker border */
+            border-radius: 10px; /* Rounded like V1 */
+            background-color: var(--v1-board-bg-svg); /* V1 inner board bg (grid lines) */
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.4), 0 5px 15px rgba(0,0,0,0.2); /* V1 style shadows */
+            transition: opacity 0.3s ease;
+        }
+        #game-board.ai-thinking {
+            pointer-events: none; opacity: 0.7; cursor: wait;
+        }
+
+        .board-cell {
+            fill: var(--v1-cell-bg);
+            stroke: var(--v1-cell-border-stroke);
+            stroke-width: 1px;
+            transition: fill 0.2s ease;
+        }
+        .invalid-move-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            fill: var(--invalid-color) !important;
+        }
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+          40%, 60% { transform: translate3d(3px, 0, 0); }
+        }
+
+        /* Piece Styling */
+        .piece-base {
+            stroke-width: 1.5;
+            transition: fill 0.25s ease-in-out;
+        }
+         .piece-sheen {
+            pointer-events: none;
+         }
+
+        .placed-piece {
+            animation: dropIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes dropIn {
+            0% { transform: scale(0) translateY(-15px); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .is-flipping {
+            animation: rotateYFlip 0.6s ease-in-out;
+        }
+        @keyframes rotateYFlip {
+            0%   { transform: rotateY(0deg) scale(1); }
+            49%  { transform: rotateY(89deg) scale(1.1); } /* Scale up slightly before disappearing */
+            50%  { transform: rotateY(90deg) scale(1.1); opacity: 0.3; } /* Moment of color change, almost invisible */
+            51%  { transform: rotateY(91deg) scale(1.1); opacity: 0.3; }
+            100% { transform: rotateY(0deg) scale(1); opacity: 1; }
+        }
+
+
+        .winning-piece .piece-base { /* V2 animation for winning pieces */
+            animation: glow-base 1.5s infinite alternate;
+        }
+        .winning-piece .piece-sheen {
+            animation: glow-sheen 1.5s infinite alternate;
+        }
+        @keyframes glow-base { /* Make base piece glow subtly */
+            from { filter: drop-shadow(0 0 3px rgba(255,255,100,0.5)); }
+            to   { filter: drop-shadow(0 0 8px rgba(255,215,0,0.8)); }
+        }
+        @keyframes glow-sheen { /* Make sheen brighter */
+            from { opacity: 0.6; }
+            to   { opacity: 1; fill: url(#gradPieceSheenWin); } /* Optionally use a different sheen for win */
+        }
+
+
+        button { /* V2 button styling, looks good */
+            margin: 5px; padding: 10px 15px; background-color: var(--button-color);
+            border: none; color: white; border-radius: 8px; cursor: pointer;
+            font-family: inherit; font-size: 0.95em; width: 100%;
+            box-sizing: border-box; transition: all 0.2s ease; position: relative;
+            overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        button:not(:disabled):hover {
+            background-color: var(--button-hover); transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        button:disabled { background-color: #aaa; cursor: not-allowed; box-shadow: none; transform: none; opacity: 0.7; }
+        button:active:not(:disabled) { transform: translateY(0px); box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+        button::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 5px; height: 5px;
+            background: rgba(255, 255, 255, 0.5); opacity: 0; border-radius: 100%;
+            transform: scale(1, 1) translate(-50%); transform-origin: 50% 50%;
+        }
+        @keyframes ripple {
+            0% { transform: scale(0, 0) translate(-50%); opacity: 0.5; }
+            100% { transform: scale(150, 150) translate(-50%); opacity: 0; }
+        }
+        button:not(:disabled):focus:not(:active)::after { animation: ripple 0.7s ease-out; }
+
+        .theme-toggle {
+            position: absolute; top: 15px; right: 15px; background: none; border: none;
+            color: var(--v1-header-text);
+            font-size: 1.6em;
+            cursor: pointer; width: auto; padding: 5px; border-radius: 50%;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        body.dark-theme .theme-toggle { color: var(--text-color); }
+        .theme-toggle:hover { background-color: rgba(255, 255, 255, 0.1); transform: none; box-shadow: none; }
+        body.dark-theme .theme-toggle:hover { background-color: rgba(0,0,0,0.2); }
+
+        select {
+            margin: 5px 0; padding: 12px; border-radius: 8px; cursor: pointer;
+            font-family: inherit; width: 100%; background-color: var(--select-bg);
+            border: 1px solid var(--select-border); font-size: 1em; appearance: none;
+            transition: all 0.2s ease; color: #333; box-sizing: border-box;
+        }
+        select:hover { background-color: var(--select-hover); border-color: #bbb; }
+        .select-wrapper { position: relative; margin-bottom: 15px; }
+        .select-wrapper::after {
+            content: '▼'; font-size: 1.2em; color: #555; position: absolute;
+            right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none;
+        }
+
+        /* Consolidated message styles */
+        #turn-timer, .status-message, .pass-notification, .end-game-message {
+            padding: 10px 15px; border-radius: 10px; margin: 12px 0;
+            font-size: 1.1em; font-weight: 500;
+            min-height: 1.5em; line-height: 1.5em;
+            color: var(--text-color);
+        }
+
+        /* Individual message backgrounds and animations */
+        #turn-timer { background-color: var(--timer-bg); }
+        .status-message { background-color: var(--status-bg); animation: fadeIn 0.5s ease; }
+        .pass-notification { background-color: var(--pass-bg); animation: flash 1.5s ease; }
+        .end-game-message { background-color: rgba(0,0,0,0.35); font-size: 1.4em; animation: fadeInScale 1s ease; }
+
+        .timer-warning { background-color: var(--timer-warning-bg) !important; animation: pulse-warning 1s infinite alternate; font-weight: bold; }
+        @keyframes pulse-warning { from { background-color: var(--timer-warning-bg); } to { background-color: var(--timer-warning-pulse); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes flash {
+            0%, 100% { background-color: var(--pass-bg); transform: scale(1); }
+            50% { background-color: var(--pass-pulse); transform: scale(1.02); }
+        }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+        /* Modal styles */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: var(--overlay-bg); z-index: 90;
+            opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+        .overlay.active { opacity: 1; visibility: visible; }
+        .modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            background-color: var(--modal-bg); color: var(--modal-text);
+            padding: 25px; border-radius: 15px; box-shadow: 0 0 30px var(--modal-shadow);
+            max-width: 90%; width: 450px; max-height: 90vh; overflow-y: auto;
+            text-align: left; z-index: 100; opacity: 0; visibility: hidden;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .modal.active { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+        .modal h2 { margin-top: 0; color: var(--modal-text); border-bottom: 2px solid var(--stat-border); padding-bottom: 10px; font-size: 1.4em; }
+        .modal p, .modal ul { color: var(--modal-text); line-height: 1.6; font-size: 0.95em; }
+        .modal ul { padding-left: 20px; } .modal li { margin-bottom: 8px; }
+        .modal button { width: auto; margin-top: 20px; display: block; margin-left: auto; margin-right: 0; min-width: 80px; color: white; }
+        .modal .modal-close {
+            position: absolute; top: 10px; right: 10px; background: none; border: none;
+            font-size: 1.8em; cursor: pointer; color: #999;
+            width: auto; padding: 5px; line-height: 1; transition: color 0.2s;
+            margin: 0; box-shadow: none;
+        }
+        .modal .modal-close:hover { color: #333; background: none; transform: none; box-shadow: none; }
+
+        .button-row { display: flex; gap: 10px; margin-top: 15px; margin-bottom: 10px; }
+        .button-row button { flex: 1; }
+        #setup-screen .button-row button.selected {
+            background-color: var(--button-hover); box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            transform: translateY(1px);
+        }
+
+        /* Statistics Panel */
+        #statistics-content { display: flex; flex-direction: column; gap: 12px; }
+        .stat-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--stat-border); font-size: 0.95em; }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-label { color: var(--modal-text); opacity: 0.8; }
+        .stat-value { font-weight: bold; color: var(--stat-value-color); display: flex; align-items: center; gap: 5px; }
+        .stat-value .score-circle { width: 14px; height: 14px; }
+
+        .progress-container { height: 8px; width: 100%; background-color: var(--progress-bg); border-radius: 4px; margin-top: 5px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--progress-bar-bg); border-radius: 4px; transition: width 0.4s ease; }
+
+        /* Toggle Switch */
+        .option-label { display: flex; justify-content: space-between; align-items: center; color: var(--v1-info-text-light); margin: 15px 0; font-size: 1em; }
+        body.dark-theme .option-label { color: var(--text-color); }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--toggle-bg); transition: .3s; border-radius: 26px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: var(--toggle-slider); transition: .3s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--toggle-checked-bg); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* Responsive styles */
+        @media (max-width: 500px) {
+            body { padding: 5px 0; min-height: initial; height: auto; overflow-y: auto; }
+            #game-container { padding: 15px; width: 95%; }
+            h1 { font-size: 2em; }
+            button, select { padding: 12px; font-size: 1em; }
+            .scoreboard { font-size: 1em; padding: 8px; }
+            .score-circle { width: 16px; height: 16px; }
+            .end-game-message { font-size: 1.3em; }
+            #turn-timer, .status-message { font-size: 1em; }
+            .button-row { flex-wrap: wrap; }
+            .modal { width: 90%; padding: 20px; }
+            .modal h2 { font-size: 1.3em; }
+            .modal p, .modal ul { font-size: 0.9em; }
+
+            /* Additional styles for very small screens */
+            @media (max-height: 650px) {
+                h1 { font-size: 1.8em; margin-bottom: 8px; }
+                #game-container { padding: 10px; }
+                .scoreboard, #turn-timer, .status-message, .pass-notification { margin: 6px 0; font-size: 0.9em; }
+                #game-board { margin: 10px auto; }
+                .button-row { margin-top: 8px; gap: 5px; }
+                button, select { padding: 10px; font-size: 0.9em; }
+                .option-label { margin: 10px 0; }
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay" id="main-overlay"></div>
+
+    <div id="game-container">
+        <h2>🏆 Reversi Supreme 🏆</h2>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle Theme" aria-label="Toggle light and dark theme">🌙</button>
+
+        <div id="setup-screen">
+            <p>Select your color:</p>
+            <div class="button-row">
+                <button id="black-button" data-color="1">Black (First)</button>
+                <button id="white-button" data-color="-1">White (Second)</button>
+            </div>
+
+            <p>Select difficulty:</p>
+            <div class="select-wrapper">
+                <select id="difficulty-select">
+                    <option value="1">Level 1 (Beginner)</option>
+                    <option value="2">Level 2</option>
+                    <option value="3">Level 3 (Easy)</option>
+                    <option value="4" selected>Level 4 (Casual)</option>
+                    <option value="5">Level 5 (Medium)</option>
+                    <option value="6">Level 6 (Hard)</option>
+                    <option value="7">Level 7 (Expert)</option>
+                    <option value="8">Level 8 (Master)</option>
+                </select>
+            </div>
+
+            <p>Select time limit (per turn):</p>
+            <div class="select-wrapper">
+                <select id="time-limit-select">
+                    <option value="0">No Time Limit</option>
+                    <option value="10">10 seconds</option>
+                    <option value="15">15 seconds</option>
+                    <option value="20">20 seconds</option>
+                    <option value="30" selected>30 seconds</option>
+                    <option value="45">45 seconds</option>
+                    <option value="60">60 seconds</option>
+                </select>
+            </div>
+
+            <div class="option-label">
+                <span>Show Valid Moves</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="show-valid-moves-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="option-label">
+                <span>Sound Effects</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sound-toggle-checkbox" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <button id="start-game-button" style="margin-top: 15px;">Start Game</button>
+        </div>
+
+        <div id="game-area" class="hidden">
+            <div id="status" class="status-message" role="status"></div>
+            <div id="scoreboard" class="scoreboard">
+                <div class="score-item">
+                    <span class="score-circle black-circle" aria-hidden="true"></span>
+                    Black: <span id="black-score" style="margin-left: 5px; font-weight:bold;">2</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-circle white-circle" aria-hidden="true"></span>
+                    White: <span id="white-score" style="margin-left: 5px; font-weight:bold;">2</span>
+                </div>
+            </div>
+
+            <svg id="game-board" width="100%" viewBox="0 0 400 400" role="application" aria-label="Reversi game board">
+                <defs>
+                    <!-- Light Theme Gradients -->
+                    <linearGradient id="gradBlackPiece" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--v1-piece-black-grad-start);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--v1-piece-black-grad-end);stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="gradWhitePiece" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--v1-piece-white-grad-start);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--v1-piece-white-grad-end);stop-opacity:1" />
+                    </linearGradient>
+                    <radialGradient id="gradPieceSheen" cx="30%" cy="30%" r="70%" fx="35%" fy="35%"> <!-- Adjusted fx, fy for better sheen position -->
+                        <stop offset="0%" style="stop-color:var(--v1-piece-sheen-start); stop-opacity:1;" />
+                        <stop offset="100%" style="stop-color:var(--v1-piece-sheen-end); stop-opacity:1;" />
+                    </radialGradient>
+                    <radialGradient id="gradPieceSheenWin" cx="30%" cy="30%" r="70%" fx="35%" fy="35%">
+                        <stop offset="0%" style="stop-color:rgba(255,223,100,0.7); stop-opacity:1;" /> <!-- Golden sheen for win -->
+                        <stop offset="100%" style="stop-color:rgba(255,223,100,0); stop-opacity:1;" />
+                    </radialGradient>
+
+                    <!-- Dark Theme Gradients -->
+                    <linearGradient id="gradBlackPieceDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--v1-piece-black-grad-start);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--v1-piece-black-grad-end);stop-opacity:1" />
+                    </linearGradient>
+                    <linearGradient id="gradWhitePieceDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:var(--v1-piece-white-grad-start);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:var(--v1-piece-white-grad-end);stop-opacity:1" />
+                    </linearGradient>
+                    <!-- Sheen can use the same radial gradient, color vars change for dark mode -->
+                </defs>
+            </svg>
+
+            <div id="turn-timer" role="status"></div>
+            <div id="pass-message" class="pass-notification hidden" role="status">No valid moves! Turn passed.</div>
+            <div id="end-game-message" class="end-game-message hidden" role="status"></div>
+
+            <div class="button-row" id="game-controls">
+                <button id="undo-button" title="Undo last move" disabled aria-label="Undo last move">↩ Undo</button>
+                <button id="hint-button" title="Show a suggested move" aria-label="Show hint">💡 Hint</button>
+                <button id="stats-button" title="Show game statistics" aria-label="Show statistics">📊 Stats</button>
+                <button id="reset-button" title="Start a new game" aria-label="Start new game">🔄 New Game</button>
+            </div>
+        </div>
+
+         <button id="help-button" style="margin-top: 10px;" aria-label="How to play">How to Play</button>
+    </div>
+
+    <!-- Modals -->
+    <div id="help-section" class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <button class="modal-close" title="Close" aria-label="Close help dialog">×</button>
+        <h2 id="help-title">How to Play Reversi</h2>
+        <p><strong>Objective:</strong> Have the most pieces of your color on the board when the game ends.</p>
+        <p><strong>Rules:</strong></p>
+        <ul>
+            <li>Black always moves first.</li>
+            <li>Place your piece on an empty square so that it forms a line (horizontal, vertical, or diagonal) with another piece of your color, sandwiching one or more of your opponent's pieces in between.</li>
+            <li>All the sandwiched opponent's pieces are flipped to your color.</li>
+            <li>A move is only valid if it flips at least one opponent piece.</li>
+            <li>If you cannot make a valid move, your turn is passed to the opponent.</li>
+            <li>The game ends when neither player can make a valid move (usually when the board is full or only one color remains).</li>
+            <li>The player with the most pieces of their color wins.</li>
+        </ul>
+        <p><strong>Tips:</strong></p>
+        <ul>
+            <li>Corners are the most valuable squares; they can never be flipped back.</li>
+            <li>Edges are also strong positions.</li>
+            <li>Try to limit your opponent's valid moves (mobility).</li>
+            <li>Sometimes having fewer pieces but better positions is advantageous.</li>
+            <li>Avoid placing pieces in squares directly adjacent to empty corners (like C2, B1, G2, B7, etc.) unless necessary, as this often allows your opponent to take the corner later.</li>
+        </ul>
+        <button id="close-help">Got it!</button>
+    </div>
+
+    <div id="statistics-panel" class="modal" role="dialog" aria-modal="true" aria-labelledby="stats-title">
+        <button class="modal-close" title="Close" aria-label="Close statistics dialog">×</button>
+        <h2 id="stats-title">Game Statistics</h2>
+        <div id="statistics-content">
+            <div class="stat-item">
+                <span class="stat-label">Current Score</span>
+                <span class="stat-value">
+                    <span class="score-circle black-circle" aria-hidden="true"></span> <span id="stats-black-score">0</span>  - 
+                    <span id="stats-white-score">0</span> <span class="score-circle white-circle" aria-hidden="true"></span>
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Pieces Flipped (Total)</span>
+                <span class="stat-value" id="stats-flipped">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Moves Played (Total)</span>
+                <span class="stat-value" id="stats-moves">0</span>
+            </div>
+             <div class="stat-item">
+                <span class="stat-label">Corners Captured</span>
+                 <span class="stat-value">
+                    <span class="score-circle black-circle" aria-hidden="true"></span> <span id="stats-black-corners">0</span>  - 
+                    <span id="stats-white-corners">0</span> <span class="score-circle white-circle" aria-hidden="true"></span>
+                </span>
+            </div>
+             <div class="stat-item">
+                <span class="stat-label">Edges Captured</span>
+                 <span class="stat-value">
+                    <span class="score-circle black-circle" aria-hidden="true"></span> <span id="stats-black-edges">0</span>  - 
+                    <span id="stats-white-edges">0</span> <span class="score-circle white-circle" aria-hidden="true"></span>
+                </span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Current Potential Moves</span>
+                <span class="stat-value" id="stats-potential-moves">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Board Filled</span>
+                <span class="stat-value" id="stats-board-filled">6.25%</span>
+            </div>
+            <div class="progress-container" aria-label="Board filled progress bar">
+                <div class="progress-bar" id="board-filled-progress" style="width: 6.25%" role="progressbar" aria-valuenow="6.25" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <button id="close-stats">Close</button>
+    </div>
+
+    <script>
+        // --- Constants ---
+        const BOARD_SIZE = 8;
+        let CELL_SIZE; // Calculated dynamically
+
+        // --- Utility Functions ---
+
+        // Theme Management Utilities
+        const ThemeUtils = {
+            /**
+             * Applies or removes dark theme
+             * @param {boolean} enable - Whether to enable dark theme
+             */
+            setDarkTheme(enable) {
+                darkTheme = enable;
+                document.body.classList.toggle('dark-theme', enable);
+                this.updateThemeButton();
+                this.saveThemePreference();
+                if (!gameAreaDiv.classList.contains('hidden')) {
+                    drawBoard(); // Redraw board to apply new theme colors
+                }
+            },
+
+            /**
+             * Updates theme toggle button appearance
+             */
+            updateThemeButton() {
+                themeToggleButton.textContent = darkTheme ? '☀️' : '🌙';
+                themeToggleButton.title = darkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme';
+            },
+
+            /**
+             * Saves theme preference to localStorage
+             */
+            saveThemePreference() {
+                try {
+                    localStorage.setItem('reversiTheme', darkTheme ? 'dark' : 'light');
+                } catch (e) {
+                    console.warn("Could not save theme preference.");
+                }
+            },
+
+            /**
+             * Loads theme preference from localStorage
+             */
+            loadThemePreference() {
+                try {
+                    darkTheme = localStorage.getItem('reversiTheme') === 'dark';
+                } catch (e) {
+                    console.warn("Could not load theme preference.");
+                    darkTheme = false;
+                } finally {
+                    this.setDarkTheme(darkTheme);
+                }
+            },
+
+            /**
+             * Toggles between light and dark theme
+             */
+            toggle() {
+                playSound('click');
+                this.setDarkTheme(!darkTheme);
+            }
+        };
+
+        // Modal Management Utilities
+        const ModalUtils = {
+            /**
+             * Shows or hides a modal
+             * @param {HTMLElement} modalElement - The modal element to toggle
+             * @param {boolean} show - Whether to show the modal
+             * @param {Function} onShow - Optional callback when modal is shown
+             */
+            toggle(modalElement, show, onShow = null) {
+                playSound('click');
+
+                if (show) {
+                    mainOverlay.classList.add('active');
+                    modalElement.classList.add('active');
+
+                    // Execute optional callback (e.g., for updating content)
+                    if (onShow) onShow();
+
+                    // Focus management
+                    const closeButton = modalElement.querySelector('.modal-close, #close-help, #close-stats');
+                    closeButton?.focus();
+                } else {
+                    mainOverlay.classList.remove('active');
+                    modalElement.classList.remove('active');
+                }
+            },
+
+            /**
+             * Shows a modal
+             * @param {HTMLElement} modalElement - The modal element to show
+             * @param {Function} onShow - Optional callback when modal is shown
+             */
+            show(modalElement, onShow = null) {
+                this.toggle(modalElement, true, onShow);
+            },
+
+            /**
+             * Hides a modal
+             * @param {HTMLElement} modalElement - The modal element to hide
+             */
+            hide(modalElement) {
+                this.toggle(modalElement, false);
+            },
+
+            /**
+             * Closes all active modals
+             */
+            closeAll() {
+                this.hide(helpSection);
+                this.hide(statisticsPanel);
+            }
+        };
+
+        // Board Position Calculation Utilities
+        const BoardUtils = {
+            /**
+             * Converts board row/col to SVG center coordinates
+             * @param {number} row - Board row (0-7)
+             * @param {number} col - Board column (0-7)
+             * @returns {Object} Object with cx, cy coordinates
+             */
+            boardToSvgCoords(row, col) {
+                return {
+                    cx: col * CELL_SIZE + CELL_SIZE / 2,
+                    cy: row * CELL_SIZE + CELL_SIZE / 2
+                };
+            },
+
+            /**
+             * Checks if a position is within board bounds
+             * @param {number} row - Board row
+             * @param {number} col - Board column
+             * @returns {boolean} True if position is valid
+             */
+            isValidPosition(row, col) {
+                return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
+            },
+
+            /**
+             * Checks if a position is a corner
+             * @param {number} row - Board row
+             * @param {number} col - Board column
+             * @returns {boolean} True if position is a corner
+             */
+            isCorner(row, col) {
+                return (row === 0 || row === BOARD_SIZE - 1) &&
+                       (col === 0 || col === BOARD_SIZE - 1);
+            },
+
+            /**
+             * Checks if a position is on the edge (but not corner)
+             * @param {number} row - Board row
+             * @param {number} col - Board column
+             * @returns {boolean} True if position is on edge but not corner
+             */
+            isEdge(row, col) {
+                const isOnEdge = row === 0 || row === BOARD_SIZE - 1 ||
+                                col === 0 || col === BOARD_SIZE - 1;
+                return isOnEdge && !this.isCorner(row, col);
+            },
+
+            /**
+             * Checks if a position is adjacent to an empty corner
+             * @param {number} row - Board row
+             * @param {number} col - Board column
+             * @returns {boolean} True if adjacent to empty corner
+             */
+            isAdjacentToEmptyCorner(row, col) {
+                const adjToCorners = [
+                    [0,1], [1,0], [1,1], [0,6], [1,6], [1,7],
+                    [6,0], [6,1], [7,1], [6,6], [6,7], [7,6]
+                ];
+
+                if (!adjToCorners.some(([r, c]) => r === row && c === col)) {
+                    return false;
+                }
+
+                // Check each corner
+                const corners = [[0,0], [0,7], [7,0], [7,7]];
+                return corners.some(([cornerRow, cornerCol]) => {
+                    if (board[cornerRow]?.[cornerCol] !== EMPTY) return false;
+
+                    // Check if current position is adjacent to this empty corner
+                    const rowDiff = Math.abs(row - cornerRow);
+                    const colDiff = Math.abs(col - cornerCol);
+                    return (rowDiff <= 1 && colDiff <= 1) && !(rowDiff === 0 && colDiff === 0);
+                });
+            },
+
+            /**
+             * Gets all corner positions
+             * @returns {Array} Array of [row, col] corner positions
+             */
+            getCorners() {
+                return [[0,0], [0, BOARD_SIZE-1], [BOARD_SIZE-1, 0], [BOARD_SIZE-1, BOARD_SIZE-1]];
+            },
+
+            /**
+             * Calculates distance between two board positions
+             * @param {number} row1 - First position row
+             * @param {number} col1 - First position column
+             * @param {number} row2 - Second position row
+             * @param {number} col2 - Second position column
+             * @returns {number} Manhattan distance between positions
+             */
+            getDistance(row1, col1, row2, col2) {
+                return Math.abs(row1 - row2) + Math.abs(col1 - col2);
+            }
+        };
+
+        // DOM Manipulation Utilities
+        const DOMUtils = {
+            /**
+             * Toggles element visibility
+             * @param {HTMLElement} element - Element to toggle
+             * @param {boolean} show - Whether to show the element
+             */
+            toggleVisibility(element, show) {
+                element.classList.toggle('hidden', !show);
+            },
+
+            /**
+             * Shows an element
+             * @param {HTMLElement} element - Element to show
+             */
+            show(element) {
+                element.classList.remove('hidden');
+            },
+
+            /**
+             * Hides an element
+             * @param {HTMLElement} element - Element to hide
+             */
+            hide(element) {
+                element.classList.add('hidden');
+            },
+
+            /**
+             * Sets element text content safely
+             * @param {HTMLElement} element - Element to update
+             * @param {string} text - Text content to set
+             */
+            setText(element, text) {
+                if (element) element.textContent = text;
+            },
+
+            /**
+             * Sets element HTML content safely
+             * @param {HTMLElement} element - Element to update
+             * @param {string} html - HTML content to set
+             */
+            setHTML(element, html) {
+                if (element) element.innerHTML = html;
+            },
+
+            /**
+             * Adds or removes a class from an element
+             * @param {HTMLElement} element - Element to modify
+             * @param {string} className - Class name to toggle
+             * @param {boolean} force - Force add/remove (true=add, false=remove, undefined=toggle)
+             */
+            toggleClass(element, className, force) {
+                if (element) element.classList.toggle(className, force);
+            },
+
+            /**
+             * Safely adds event listener with optional options
+             * @param {HTMLElement} element - Element to attach listener to
+             * @param {string} event - Event type
+             * @param {Function} handler - Event handler function
+             * @param {Object} options - Event listener options
+             */
+            addListener(element, event, handler, options = {}) {
+                if (element) element.addEventListener(event, handler, options);
+            }
+        };
+
+        // Game State Utilities
+        const GameUtils = {
+            /**
+             * Counts pieces on the board
+             * @param {Array} currentBoard - Board to count pieces on (defaults to main board)
+             * @returns {Object} Object with black and white piece counts
+             */
+            countPieces(currentBoard = board) {
+                let blackCount = 0, whiteCount = 0;
+                for (let r = 0; r < BOARD_SIZE; r++) {
+                    for (let c = 0; c < BOARD_SIZE; c++) {
+                        if (currentBoard[r][c] === BLACK) blackCount++;
+                        else if (currentBoard[r][c] === WHITE) whiteCount++;
+                    }
+                }
+                return { black: blackCount, white: whiteCount };
+            },
+
+            /**
+             * Gets player color name
+             * @param {number} color - Player color constant
+             * @returns {string} Color name
+             */
+            getPlayerName(color) {
+                return color === BLACK ? "Black" : "White";
+            },
+
+            /**
+             * Checks if game is over
+             * @returns {boolean} True if game is over
+             */
+            isGameOver() {
+                return gameOver;
+            },
+
+            /**
+             * Resets game statistics
+             */
+            resetStats() {
+                gameStats = { flippedPieces: 0, movesPlayed: 0, blackCorners: 0, whiteCorners: 0, blackEdges: 0, whiteEdges: 0 };
+            }
+        };
+
+        // Piece colors
+        const BLACK = 1;
+        const WHITE = -1;
+        const EMPTY = 0;
+
+        // Directions for move validation
+        const DIRECTIONS = [
+            [-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]
+        ];
+
+        // AI position weights for board evaluation
+        const POSITION_WEIGHTS = [
+            [120, -20, 20,  5,  5, 20, -20, 120], [-20, -40, -5, -5, -5, -5, -40, -20],
+            [ 20,  -5, 15,  3,  3, 15,  -5,  20], [  5,  -5,  3,  3,  3,  3,  -5,   5],
+            [  5,  -5,  3,  3,  3,  3,  -5,   5], [ 20,  -5, 15,  3,  3, 15,  -5,  20],
+            [-20, -40, -5, -5, -5, -5, -40, -20], [120, -20, 20,  5,  5, 20, -20, 120]
+        ];
+
+        // AI evaluation weights
+        const MOBILITY_WEIGHT = 10;
+
+        // Animation durations (in milliseconds)
+        const FLIP_ANIMATION_DURATION = 600;
+        const FLIP_DELAY_INCREMENT = 60;
+        const PASS_MESSAGE_DELAY = 1500;
+        const TIMER_TIMEOUT_DELAY = 500;
+        const AI_THINKING_DELAY_MIN = 500;
+        const AI_THINKING_DELAY_MAX = 1000;
+
+        // Game timing constants
+        const TIMER_UPDATE_INTERVAL = 1000; // 1 second
+        const TIMER_WARNING_THRESHOLD = 5; // seconds
+
+        // AI constants
+        const MAX_AI_DEPTH = 8; // Increased max depth for expert levels
+        const MIN_AI_DEPTH = 1;
+        const AI_DEPTH_DIVISOR = 1.2; // Better scaling for depth calculation
+        const HIGH_PIECE_COUNT_THRESHOLD = 50;
+        const MAX_CACHE_SIZE = 15000; // Limit cache size to prevent memory bloat
+        const CACHE_CLEANUP_RATIO = 0.3; // Remove 30% of entries when limit reached
+        const BASE_AI_THINK_TIME = 2500; // Base thinking time (2.5 seconds)
+        const MAX_AI_THINK_TIME = 6000; // Maximum thinking time for expert levels (6 seconds)
+
+        // UI constants
+        const PIECE_RADIUS_FACTOR = 0.42;
+        const VALID_MOVE_INDICATOR_RADIUS_FACTOR = 0.12;
+        const HINT_MARKER_RADIUS_FACTOR = 0.3;
+
+        // AI scoring constants
+        const GAME_OVER_SCORE_BASE = 10000;
+
+        // UI delays and timing
+        const POST_MOVE_UPDATE_DELAY = 100; // Delay after animations complete
+
+        // Piece scoring multipliers (for AI evaluation)
+        const POSITIONAL_SCORE_MULTIPLIER = 2;
+        const MOBILITY_SCORE_MULTIPLIER = 1.5;
+        const PIECE_DIFF_MULTIPLIER = 3;
+
+        // AI randomness constants
+        const RANDOMNESS_BASE_LEVEL = 4; // Extended randomness to level 4
+        const RANDOMNESS_MULTIPLIER = 0.2; // Reduced base randomness
+        const RANDOMNESS_DECAY_FACTOR = 0.15; // Gradual decrease per level
+
+        // AI skill-based evaluation constants
+        const EVALUATION_STRENGTH_BASE = 0.7; // Base evaluation strength
+        const EVALUATION_STRENGTH_MAX = 1.0; // Maximum evaluation strength
+        const EVALUATION_STRENGTH_SCALING = 0.0375; // How much strength increases per level
+
+        // --- Game State Variables ---
+        let board = [];
+        let currentPlayer;
+        let playerColor;
+        let aiColor;
+        let gameOver = false;
+        let soundEnabled = true;
+        let showValidMoves = true;
+        let gameStateHistory = [];
+        let difficultyLevel = 4;
+        let timeLimit = 30;
+        let turnTimerInterval;
+        let turnStartTime;
+        let activeHint = null;
+        let minimaxCache = {};
+        let darkTheme = false;
+        let isAITurn = false;
+        let passCounter = 0;
+        let gameStats = { flippedPieces: 0, movesPlayed: 0, blackCorners: 0, whiteCorners: 0, blackEdges: 0, whiteEdges: 0 };
+
+        // --- DOM Elements Cache (largely from V2) ---
+        const svg = document.getElementById('game-board');
+        const statusElement = document.getElementById('status');
+        const resetButton = document.getElementById('reset-button');
+        const undoButton = document.getElementById('undo-button');
+        const setupScreenDiv = document.getElementById('setup-screen');
+        const gameAreaDiv = document.getElementById('game-area');
+        const blackButton = document.getElementById('black-button');
+        const whiteButton = document.getElementById('white-button');
+        const startGameButton = document.getElementById('start-game-button');
+        const scoreboard = document.getElementById('scoreboard');
+        const blackScoreElement = document.getElementById('black-score');
+        const whiteScoreElement = document.getElementById('white-score');
+        const endGameMessageElement = document.getElementById('end-game-message');
+        const soundToggleCheckbox = document.getElementById('sound-toggle-checkbox');
+        const showValidMovesToggle = document.getElementById('show-valid-moves-toggle');
+        const difficultySelect = document.getElementById('difficulty-select');
+        const timeLimitSelect = document.getElementById('time-limit-select');
+        const turnTimerElement = document.getElementById('turn-timer');
+        const helpButton = document.getElementById('help-button');
+        const helpSection = document.getElementById('help-section');
+        const closeHelpButton = document.getElementById('close-help');
+        const hintButton = document.getElementById('hint-button');
+        const passMessageElement = document.getElementById('pass-message');
+        const statsButton = document.getElementById('stats-button');
+        const statisticsPanel = document.getElementById('statistics-panel');
+        const closeStatsButton = document.getElementById('close-stats');
+        const mainOverlay = document.getElementById('main-overlay');
+        const themeToggleButton = document.getElementById('theme-toggle');
+        const statsBlackScore = document.getElementById('stats-black-score');
+        const statsWhiteScore = document.getElementById('stats-white-score');
+        const statsFlipped = document.getElementById('stats-flipped');
+        const statsMoves = document.getElementById('stats-moves');
+        const statsBlackCorners = document.getElementById('stats-black-corners');
+        const statsWhiteCorners = document.getElementById('stats-white-corners');
+        const statsBlackEdges = document.getElementById('stats-black-edges');
+        const statsWhiteEdges = document.getElementById('stats-white-edges');
+        const statsPotentialMoves = document.getElementById('stats-potential-moves');
+        const statsBoardFilled = document.getElementById('stats-board-filled');
+        const boardFilledProgress = document.getElementById('board-filled-progress');
+        const rootStyle = document.documentElement.style;
+
+
+        // --- Tone.js Sound Synthesis ---
+        let moveSynth, flipSynth, winSynth, loseSynth, passSynth, clickSynth, errorSynth;
+        function initializeSounds() {
+            if (Tone.context.state !== 'running') {
+                Tone.start().then(() => console.log("Tone.js audio context started."))
+                            .catch(e => {
+                                console.error("Failed to start Tone.js audio context:", e);
+                                soundEnabled = false; soundToggleCheckbox.checked = false;
+                                console.warn("Sound effects disabled.");
+                            });
+            }
+            try {
+                moveSynth = moveSynth || new Tone.Synth({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.05, release: 0.2 } }).toDestination();
+                flipSynth = flipSynth || new Tone.Synth({ oscillator: { type: 'triangle' }, envelope: { attack: 0.005, decay: 0.08, sustain: 0.01, release: 0.1 }, volume: -8 }).toDestination(); // Softer flip
+                clickSynth = clickSynth || new Tone.MembraneSynth({ pitchDecay: 0.01, octaves: 2, envelope: { attack: 0.001, decay: 0.1, sustain: 0 } }).toDestination();
+                winSynth = winSynth || new Tone.PolySynth(Tone.Synth, { oscillator: { type: 'triangle' }, envelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 0.5 } }).toDestination();
+                loseSynth = loseSynth || new Tone.NoiseSynth({ noise: { type: 'brown' }, envelope: { attack: 0.1, decay: 0.3, sustain: 0, release: 0.3 } }).toDestination();
+                passSynth = passSynth || new Tone.Synth({ oscillator: { type: 'square' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0, release: 0.1 }, volume: -8 }).toDestination();
+                errorSynth = errorSynth || new Tone.Synth({ oscillator: {type: 'sawtooth'}, envelope: {attack: 0.01, decay: 0.1, sustain: 0, release: 0.1}, volume: -10 }).toDestination();
+             } catch (e) {
+                 console.error("Failed to create Tone.js synths:", e);
+                 soundEnabled = false; soundToggleCheckbox.checked = false; console.warn("Sound effects disabled.");
+             }
+        }
+        function playSound(type) {
+            if (!soundEnabled || !Tone || Tone.context.state !== 'running') return;
+            try {
+                // Add a small buffer to prevent timing conflicts
+                const now = Tone.now() + 0.01;
+                switch (type) {
+                    case 'move': moveSynth?.triggerAttackRelease('C4', '8n', now); break;
+                    case 'flip': flipSynth?.triggerAttackRelease('G4', '16n', now); break; // Single, distinct flip sound
+                    case 'win': winSynth?.triggerAttackRelease(['C4', 'E4', 'G4'], '2n', now); break;
+                    case 'lose': loseSynth?.triggerAttackRelease('2n', now); break;
+                    case 'pass': passSynth?.triggerAttackRelease('A3', '8n', now); break;
+                    case 'click': clickSynth?.triggerAttackRelease('C2', '16n', now); break;
+                    case 'start': winSynth?.triggerAttackRelease(['C4', 'G4'], '4n', now); break;
+                    case 'error': errorSynth?.triggerAttackRelease('G#2', '16n', now); break;
+                }
+            } catch (error) {
+                console.error("Tone.js error:", error);
+                // If timing error occurs, try again with a larger buffer
+                if (error.message.includes("Start time must be strictly greater")) {
+                    try {
+                        const retryTime = Tone.now() + 0.05;
+                        switch (type) {
+                            case 'move': moveSynth?.triggerAttackRelease('C4', '8n', retryTime); break;
+                            case 'flip': flipSynth?.triggerAttackRelease('G4', '16n', retryTime); break;
+                            case 'win': winSynth?.triggerAttackRelease(['C4', 'E4', 'G4'], '2n', retryTime); break;
+                            case 'lose': loseSynth?.triggerAttackRelease('2n', retryTime); break;
+                            case 'pass': passSynth?.triggerAttackRelease('A3', '8n', retryTime); break;
+                            case 'click': clickSynth?.triggerAttackRelease('C2', '16n', retryTime); break;
+                            case 'start': winSynth?.triggerAttackRelease(['C4', 'G4'], '4n', retryTime); break;
+                            case 'error': errorSynth?.triggerAttackRelease('G#2', '16n', retryTime); break;
+                        }
+                    } catch (retryError) {
+                        console.error("Tone.js retry error:", retryError);
+                    }
+                }
+            }
+        }
+
+        // --- Initialization ---
+        function initializeGame() {
+            initializeBoard(); resetGameStats(); drawBoard();
+        }
+        function initializeBoard() {
+            board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(EMPTY));
+            const mid = BOARD_SIZE / 2 - 1;
+            board[mid][mid] = WHITE; board[mid][mid + 1] = BLACK;
+            board[mid + 1][mid] = BLACK; board[mid + 1][mid + 1] = WHITE;
+            currentPlayer = BLACK; gameOver = false; isAITurn = false; passCounter = 0;
+            gameStateHistory = []; updateUndoButton(); clearHint();
+        }
+        function resetGameStats() {
+             gameStats = { flippedPieces: 0, movesPlayed: 0, blackCorners: 0, whiteCorners: 0, blackEdges: 0, whiteEdges: 0 };
+            updateStatisticsPanel();
+        }
+
+        // --- Drawing Functions ---
+        let boardInitialized = false;
+
+        function initializeBoardGraphics() {
+            if (boardInitialized) return;
+
+            // Use a fixed coordinate system that matches the viewBox
+            const viewBoxSize = 400; // Match the initial viewBox size
+            CELL_SIZE = viewBoxSize / BOARD_SIZE;
+            rootStyle.setProperty('--CELL_SIZE_VAR', `${CELL_SIZE}px`);
+            svg.setAttribute('viewBox', `0 0 ${viewBoxSize} ${viewBoxSize}`);
+
+            const fragment = document.createDocumentFragment();
+
+            // Create all board cells once
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    const rect = createSvgElement('rect', {
+                        x: c * CELL_SIZE, y: r * CELL_SIZE,
+                        width: CELL_SIZE, height: CELL_SIZE, class: 'board-cell'
+                    });
+                    rect.dataset.row = r; rect.dataset.col = c;
+                    fragment.appendChild(rect);
+                }
+            }
+            svg.appendChild(fragment);
+            boardInitialized = true;
+        }
+
+        function updateBoardDisplay() {
+            // Only update pieces and valid moves, don't recreate the entire board
+            updateAllPieces();
+            updateValidMoveIndicators();
+            updateScoreboard();
+            updateStatus();
+            updateStatisticsPanel();
+            drawHint();
+        }
+
+        function drawBoard() {
+            // Full board redraw - only use when necessary (initialization, resize)
+            if (!boardInitialized) {
+                initializeBoardGraphics();
+            }
+            updateBoardDisplay();
+        }
+
+        function updateAllPieces() {
+            // Remove all existing pieces
+            svg.querySelectorAll('.piece-group').forEach(piece => piece.remove());
+
+            // Add current pieces
+            const fragment = document.createDocumentFragment();
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c] !== EMPTY) {
+                        const pieceGroup = createPiece(r, c, board[r][c]);
+                        if (gameOver) {
+                            const scores = countPieces();
+                            const winner = scores.black > scores.white ? BLACK : (scores.white > scores.black ? WHITE : EMPTY);
+                            if (board[r][c] === winner) pieceGroup.classList.add('winning-piece');
+                        }
+                        fragment.appendChild(pieceGroup);
+                    }
+                }
+            }
+            svg.appendChild(fragment);
+        }
+
+        function updateValidMoveIndicators() {
+            // Remove existing indicators
+            svg.querySelectorAll('.valid-move-indicator').forEach(indicator => indicator.remove());
+            svg.querySelectorAll('.highlight-cell').forEach(cell => cell.classList.remove('highlight-cell'));
+
+            if (!showValidMoves || isAITurn || currentPlayer !== playerColor || gameOver) return;
+
+            const validMoves = getAllValidMoves(currentPlayer);
+            const fragment = document.createDocumentFragment();
+
+            validMoves.forEach(move => {
+                const cell = svg.querySelector(`.board-cell[data-row="${move.row}"][data-col="${move.col}"]`);
+                if (cell) {
+                    cell.classList.add('highlight-cell');
+                    const indicator = createSvgElement('circle', {
+                        cx: move.col * CELL_SIZE + CELL_SIZE / 2,
+                        cy: move.row * CELL_SIZE + CELL_SIZE / 2,
+                        class: 'valid-move-indicator'
+                    });
+                    fragment.appendChild(indicator);
+                }
+            });
+
+            svg.appendChild(fragment);
+        }
+
+        function updateSinglePiece(row, col) {
+            // Remove existing piece at this position
+            const existingPiece = svg.querySelector(`.piece-group[data-row="${row}"][data-col="${col}"]`);
+            if (existingPiece) {
+                existingPiece.remove();
+            }
+
+            // Add new piece if position is not empty
+            if (board[row][col] !== EMPTY) {
+                const pieceGroup = createPiece(row, col, board[row][col]);
+                svg.appendChild(pieceGroup);
+            }
+        }
+
+        function createSvgElement(tag, attributes) {
+            const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+            for (const key in attributes) el.setAttribute(key, attributes[key]);
+            return el;
+        }
+
+        function createPiece(row, col, color, isPlaced = false) {
+            const pieceGroup = createSvgElement('g', { class: 'piece-group' });
+            // Set transform origin for rotation here, relative to piece center in SVG coordinates
+            const centerX = col * CELL_SIZE + CELL_SIZE / 2;
+            const centerY = row * CELL_SIZE + CELL_SIZE / 2;
+            pieceGroup.setAttribute('transform-origin', `${centerX} ${centerY}`);
+
+
+            const basePiece = createSvgElement('circle', {
+                class: 'piece-base',
+                cx: centerX, cy: centerY,
+                r: CELL_SIZE * 0.42, // Slightly larger for more presence like V1
+            });
+
+            if (color === BLACK) {
+                basePiece.setAttribute('fill', `var(--piece-black-fill)`);
+                basePiece.setAttribute('stroke', `var(--piece-black-stroke-color)`);
+            } else {
+                basePiece.setAttribute('fill', `var(--piece-white-fill)`);
+                basePiece.setAttribute('stroke', `var(--piece-white-stroke-color)`);
+            }
+            
+            const sheenOverlay = createSvgElement('circle', {
+                class: 'piece-sheen',
+                cx: centerX, cy: centerY,
+                r: CELL_SIZE * 0.42, // Match base radius
+                fill: 'url(#gradPieceSheen)'
+            });
+
+            pieceGroup.appendChild(basePiece);
+            pieceGroup.appendChild(sheenOverlay);
+            pieceGroup.dataset.row = row; // For easier finding later
+            pieceGroup.dataset.col = col;
+
+            if (isPlaced) pieceGroup.classList.add('placed-piece');
+            return pieceGroup;
+        }
+
+
+        // --- Game Logic ---
+        function isValidMove(row, col, player, currentBoard = board) {
+            if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE || currentBoard[row][col] !== EMPTY) return false;
+            return getFlippablePieces(row, col, player, currentBoard).length > 0;
+        }
+        function getFlippablePieces(row, col, player, currentBoard = board) {
+            const opponent = -player; const piecesToFlip = [];
+            for (const [dr, dc] of DIRECTIONS) {
+                let r = row + dr; let c = col + dc;
+                const lineToFlip = []; let foundOpponentPiece = false;
+                while (r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE) {
+                    const piece = currentBoard[r][c];
+                    if (piece === opponent) { foundOpponentPiece = true; lineToFlip.push({ row: r, col: c }); }
+                    else if (piece === player) { if (foundOpponentPiece) piecesToFlip.push(...lineToFlip); break; }
+                    else { break; }
+                    r += dr; c += dc;
+                }
+            }
+            return piecesToFlip;
+        }
+        function getAllValidMoves(player, currentBoard = board) {
+            const validMoves = [];
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (currentBoard[r][c] === EMPTY) {
+                         const flippable = getFlippablePieces(r, c, player, currentBoard);
+                         if (flippable.length > 0) validMoves.push({ row: r, col: c, flips: flippable.length });
+                    }
+                }
+            }
+            return validMoves;
+        }
+
+        // Modified makeMove for new animation
+        function makeMove(row, col) {
+            playSound('move'); clearHint(); stopTurnTimer();
+            passMessageElement.classList.add('hidden');
+            saveGameState();
+
+            board[row][col] = currentPlayer;
+            const placedPieceGroup = createPiece(row, col, currentPlayer, true);
+            svg.appendChild(placedPieceGroup);
+
+            const piecesToFlip = getFlippablePieces(row, col, currentPlayer);
+            let flipDelay = FLIP_DELAY_INCREMENT;
+            const flipAnimationDuration = FLIP_ANIMATION_DURATION;
+
+            piecesToFlip.forEach((piecePos, index) => {
+                board[piecePos.row][piecePos.col] = currentPlayer; // Update data model
+
+                setTimeout(() => {
+                    const pieceGroupElement = findPieceGroupElement(piecePos.row, piecePos.col);
+                    if (pieceGroupElement) {
+                        const basePieceElement = pieceGroupElement.querySelector('.piece-base');
+                        pieceGroupElement.classList.add('is-flipping');
+                        
+                        // Change fill at animation midpoint
+                        setTimeout(() => {
+                            if (basePieceElement) {
+                                basePieceElement.setAttribute('fill', currentPlayer === BLACK ? `var(--piece-black-fill)` : `var(--piece-white-fill)`);
+                                basePieceElement.setAttribute('stroke', currentPlayer === BLACK ? `var(--piece-black-stroke-color)` : `var(--piece-white-stroke-color)`);
+                            }
+                            playSound('flip');
+                        }, flipAnimationDuration / 2);
+
+                        // Remove animation class after completion
+                        setTimeout(() => {
+                            pieceGroupElement.classList.remove('is-flipping');
+                        }, flipAnimationDuration);
+                    }
+                }, flipDelay * index);
+            });
+
+            gameStats.flippedPieces += piecesToFlip.length; gameStats.movesPlayed++;
+            const totalAnimationTime = flipDelay * piecesToFlip.length + flipAnimationDuration;
+            setTimeout(() => {
+                 updateScoreboard(); updateStatus(); updateStatisticsPanel();
+                 switchPlayer();
+            }, totalAnimationTime + POST_MOVE_UPDATE_DELAY);
+        }
+
+        function findPieceGroupElement(row, col) { // Find the <g> element
+            return svg.querySelector(`.piece-group[data-row="${row}"][data-col="${col}"]`);
+        }
+
+        function switchPlayer() {
+            passMessageElement.classList.add('hidden');
+            // Reset pass message to default text for future use
+            passMessageElement.textContent = "No valid moves! Turn passed.";
+            currentPlayer = -currentPlayer;
+
+            const validMoves = getAllValidMoves(currentPlayer);
+
+            if (validMoves.length === 0) {
+                // Current player has no valid moves - force a pass
+                playSound('pass');
+                showPassMessage();
+                passCounter++;
+
+                // Switch back to the other player
+                currentPlayer = -currentPlayer;
+
+                const otherPlayerMoves = getAllValidMoves(currentPlayer);
+                if (otherPlayerMoves.length === 0) {
+                    // Neither player has moves - game is over
+                    passCounter++;
+                    endGame();
+                    return;
+                } else {
+                    // Other player has moves, continue with them
+                    updateStatus();
+                    setTimeout(() => {
+                        updateBoardDisplay();
+                        if (currentPlayer === aiColor) triggerAIMove();
+                        else startTurnTimer();
+                    }, PASS_MESSAGE_DELAY);
+                    return;
+                }
+            } else {
+                // Current player has moves available
+                passCounter = 0; // Reset consecutive pass count
+            }
+
+            updateStatus();
+            updateBoardDisplay();
+            if (currentPlayer === aiColor) triggerAIMove();
+            else startTurnTimer();
+        }
+        function triggerAIMove() {
+            isAITurn = true; DOMUtils.toggleClass(svg, 'ai-thinking', true);
+            hintButton.disabled = true; undoButton.disabled = true;
+            DOMUtils.setText(statusElement, "AI is thinking...");
+            setTimeout(() => {
+                const aiMove = findBestMove();
+                if (aiMove && getFlippablePieces(aiMove.row, aiMove.col, aiColor).length > 0) {
+                    makeMove(aiMove.row, aiMove.col);
+                } else {
+                    console.error("AI selected an invalid move or has no moves:", aiMove, "Attempting fallback.");
+                    const validMoves = getAllValidMoves(aiColor);
+                    if (validMoves.length > 0) {
+                        makeMove(validMoves[0].row, validMoves[0].col); // Simplest fallback
+                    } else {
+                        console.error("AI truly has no valid moves during its turn.");
+                        switchPlayer(); // Attempt to pass turn (should ideally be caught earlier)
+                    }
+                }
+                finalizeTurnEnd();
+            }, AI_THINKING_DELAY_MIN + Math.random() * (AI_THINKING_DELAY_MAX - AI_THINKING_DELAY_MIN));
+        }
+        function finalizeTurnEnd() {
+             isAITurn = false; DOMUtils.toggleClass(svg, 'ai-thinking', false);
+             hintButton.disabled = gameOver; updateUndoButton();
+        }
+        function showPassMessage() {
+            DOMUtils.show(passMessageElement);
+        }
+        function endGame() {
+            gameOver = true; isAITurn = false; DOMUtils.toggleClass(svg, 'ai-thinking', false);
+            stopTurnTimer(); DOMUtils.hide(turnTimerElement);
+            const scores = GameUtils.countPieces(); let resultMessage = ""; let playerWon = false;
+            if (scores.black > scores.white) { resultMessage = "Black Wins!"; if (playerColor === BLACK) playerWon = true; }
+            else if (scores.white > scores.black) { resultMessage = "White Wins!"; if (playerColor === WHITE) playerWon = true; }
+            else { resultMessage = "It's a Draw!"; }
+            playSound(playerWon ? 'win' : (resultMessage.includes("Draw") ? 'pass' : 'lose'));
+            DOMUtils.setText(endGameMessageElement, `${resultMessage} (${scores.black} - ${scores.white})`);
+            DOMUtils.show(endGameMessageElement);
+            updateAllPieces(); // Update pieces to show winning pieces with glow
+            updateValidMoveIndicators(); // Clear valid move indicators
+            hintButton.disabled = true; undoButton.disabled = true;
+        }
+
+        // --- AI Logic ---
+        function getEffectiveDepth(difficulty) {
+            // Better depth scaling: eliminates plateaus in higher levels
+            const baseDepth = Math.floor(difficulty / AI_DEPTH_DIVISOR);
+            const expertBonus = difficulty >= 7 ? 1 : 0; // Expert levels get extra depth
+            const masterBonus = difficulty === 8 ? 1 : 0; // Master level gets maximum depth
+            return Math.max(MIN_AI_DEPTH, Math.min(baseDepth + expertBonus + masterBonus, MAX_AI_DEPTH));
+        }
+
+        function getThinkingTimeForDifficulty(difficulty) {
+            // Higher difficulties get more thinking time
+            const timeBonus = (difficulty - 1) * 500; // 500ms bonus per level
+            return Math.min(BASE_AI_THINK_TIME + timeBonus, MAX_AI_THINK_TIME);
+        }
+
+        function getEvaluationStrength(difficulty) {
+            // Higher difficulties use more sophisticated evaluation
+            const strength = EVALUATION_STRENGTH_BASE + (difficulty - 1) * EVALUATION_STRENGTH_SCALING;
+            return Math.min(strength, EVALUATION_STRENGTH_MAX);
+        }
+
+        function getRandomnessThreshold(difficulty) {
+            // More gradual randomness decrease
+            if (difficulty >= RANDOMNESS_BASE_LEVEL) return 0;
+
+            // Gradual decrease: Level 1: 80%, Level 2: 65%, Level 3: 50%
+            const levelsBelowBase = RANDOMNESS_BASE_LEVEL - difficulty;
+            return RANDOMNESS_MULTIPLIER - (levelsBelowBase * RANDOMNESS_DECAY_FACTOR);
+        }
+
+        function findBestMove() {
+            minimaxCache = {}; const validMoves = getAllValidMoves(aiColor);
+            if (validMoves.length === 0) return null; if (validMoves.length === 1) return validMoves[0];
+
+            // Handle randomness for easier difficulties with improved scaling
+            const randomnessThreshold = getRandomnessThreshold(difficultyLevel);
+            if (Math.random() < randomnessThreshold) return validMoves[Math.floor(Math.random() * validMoves.length)];
+
+            // Iterative deepening with time control for better responsiveness
+            const startTime = Date.now();
+            const thinkingTimeLimit = getThinkingTimeForDifficulty(difficultyLevel);
+            let bestMove = null;
+            let currentBestMove = null;
+            let currentBestScore = -Infinity;
+
+            // Calculate effective depth based on improved difficulty scaling
+            const totalPieces = countPieces().black + countPieces().white;
+            const baseDepth = getEffectiveDepth(difficultyLevel);
+            const gamePhaseBonus = totalPieces > HIGH_PIECE_COUNT_THRESHOLD ? 1 : 0;
+            const maxDepth = Math.max(MIN_AI_DEPTH, Math.min(baseDepth + gamePhaseBonus, MAX_AI_DEPTH));
+
+            // Iterative deepening: start with shallow depth and increase gradually
+            for (let depth = 1; depth <= maxDepth; depth++) {
+                let depthBestMove = null;
+                let depthBestScore = -Infinity;
+
+                // Sort moves for better pruning (reuse same sorting logic as minimax)
+                const sortedMoves = validMoves.slice().sort((a, b) => {
+                    const aIsCorner = BoardUtils.isCorner(a.row, a.col);
+                    const bIsCorner = BoardUtils.isCorner(b.row, b.col);
+                    if (aIsCorner && !bIsCorner) return -1;
+                    if (!aIsCorner && bIsCorner) return 1;
+
+                    const aIsEdge = BoardUtils.isEdge(a.row, a.col);
+                    const bIsEdge = BoardUtils.isEdge(b.row, b.col);
+                    if (aIsEdge && !bIsEdge) return -1;
+                    if (!aIsEdge && bIsEdge) return 1;
+
+                    return b.flips - a.flips;
+                });
+
+                // Search all moves at current depth
+                for (const move of sortedMoves) {
+                    const tempBoard = simulateMove(board, move.row, move.col, aiColor);
+                    const score = minimax(tempBoard, depth, -Infinity, Infinity, false);
+
+                    if (score > depthBestScore) {
+                        depthBestScore = score;
+                        depthBestMove = move;
+                    }
+                }
+
+                // Update best move found so far
+                if (depthBestMove) {
+                    currentBestMove = depthBestMove;
+                    currentBestScore = depthBestScore;
+                }
+
+                // Break early if we're running out of time (leave some buffer for the move execution)
+                const timeSpent = Date.now() - startTime;
+                const timeRatio = timeSpent / thinkingTimeLimit;
+                if (timeRatio > 0.8 || (depth > 2 && timeSpent > thinkingTimeLimit * 0.7)) {
+                    break;
+                }
+            }
+
+            bestMove = currentBestMove;
+
+            // Fallback to random move if no best move found (shouldn't happen but safety check)
+            if (!bestMove) {
+                console.warn("AI couldn't find a best move, using fallback");
+                bestMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+            }
+
+            return bestMove;
+        }
+        function minimax(currentBoard, depth, alpha, beta, isMaximizingPlayer) {
+             const boardKey = currentBoard.map(row => row.join('')).join('') + `_${depth}_${isMaximizingPlayer}`;
+             if (minimaxCache[boardKey] !== undefined) return minimaxCache[boardKey];
+
+             // Cache size management - prevent unlimited memory growth
+             const cacheSize = Object.keys(minimaxCache).length;
+             if (cacheSize >= MAX_CACHE_SIZE) {
+                 const keysToDelete = Math.floor(cacheSize * CACHE_CLEANUP_RATIO);
+                 const cacheKeys = Object.keys(minimaxCache);
+                 for (let i = 0; i < keysToDelete; i++) {
+                     delete minimaxCache[cacheKeys[i]];
+                 }
+             }
+
+             const player = isMaximizingPlayer ? aiColor : playerColor;
+             const validMoves = getAllValidMoves(player, currentBoard);
+             if (depth === 0 || validMoves.length === 0) {
+                 const opponentMoves = getAllValidMoves(-player, currentBoard);
+                 if (validMoves.length === 0 && opponentMoves.length === 0) { // Game over
+                      minimaxCache[boardKey] = evaluateBoard(currentBoard, true, difficultyLevel); return minimaxCache[boardKey];
+                 }
+                  if (validMoves.length === 0) { // Pass turn
+                      minimaxCache[boardKey] = minimax(currentBoard, depth, alpha, beta, !isMaximizingPlayer); return minimaxCache[boardKey];
+                  }
+                 minimaxCache[boardKey] = evaluateBoard(currentBoard, false, difficultyLevel); return minimaxCache[boardKey]; // Depth limit
+             }
+             // Sort moves for better alpha-beta pruning (prioritize corners, then edges)
+             const sortedMoves = validMoves.sort((a, b) => {
+                 // Corner moves first
+                 const aIsCorner = BoardUtils.isCorner(a.row, a.col);
+                 const bIsCorner = BoardUtils.isCorner(b.row, b.col);
+                 if (aIsCorner && !bIsCorner) return -1;
+                 if (!aIsCorner && bIsCorner) return 1;
+
+                 // Edge moves second (but not corners)
+                 const aIsEdge = BoardUtils.isEdge(a.row, a.col);
+                 const bIsEdge = BoardUtils.isEdge(b.row, b.col);
+                 if (aIsEdge && !bIsEdge) return -1;
+                 if (!aIsEdge && bIsEdge) return 1;
+
+                 // Then by number of pieces flipped (descending)
+                 return b.flips - a.flips;
+             });
+
+             if (isMaximizingPlayer) {
+                 let maxEval = -Infinity;
+                 for (const move of sortedMoves) {
+                     const childBoard = simulateMove(currentBoard, move.row, move.col, player);
+                     const evaluation = minimax(childBoard, depth - 1, alpha, beta, false);
+                     maxEval = Math.max(maxEval, evaluation); alpha = Math.max(alpha, evaluation);
+                     if (beta <= alpha) break; // Alpha-beta pruning
+                 }
+                 minimaxCache[boardKey] = maxEval; return maxEval;
+             } else {
+                 let minEval = Infinity;
+                 for (const move of sortedMoves) {
+                     const childBoard = simulateMove(currentBoard, move.row, move.col, player);
+                     const evaluation = minimax(childBoard, depth - 1, alpha, beta, true);
+                     minEval = Math.min(minEval, evaluation); beta = Math.min(beta, evaluation);
+                     if (beta <= alpha) break; // Alpha-beta pruning
+                 }
+                 minimaxCache[boardKey] = minEval; return minEval;
+             }
+        }
+        function simulateMove(parentBoard, row, col, player) { // V2
+             const newBoard = parentBoard.map(r => r.slice());
+             const piecesToFlip = getFlippablePieces(row, col, player, newBoard);
+             newBoard[row][col] = player;
+             piecesToFlip.forEach(p => { newBoard[p.row][p.col] = player; });
+             return newBoard;
+        }
+        function evaluateBoard(currentBoard, isGameOver = false, difficulty = difficultyLevel) { // V2 with skill-based evaluation
+            let score = 0; let aiPieces = 0; let playerPieces = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) for (let c = 0; c < BOARD_SIZE; c++) {
+                if (currentBoard[r][c] === aiColor) aiPieces++; else if (currentBoard[r][c] === playerColor) playerPieces++;
+            }
+            const pieceDiff = aiPieces - playerPieces;
+            if (isGameOver) return pieceDiff > 0 ? GAME_OVER_SCORE_BASE + pieceDiff : (pieceDiff < 0 ? -GAME_OVER_SCORE_BASE + pieceDiff : 0);
+
+            // Base evaluation components
+            let positionalScore = 0;
+            for (let r = 0; r < BOARD_SIZE; r++) for (let c = 0; c < BOARD_SIZE; c++) {
+                if (currentBoard[r][c] === aiColor) positionalScore += POSITION_WEIGHTS[r][c];
+                else if (currentBoard[r][c] === playerColor) positionalScore -= POSITION_WEIGHTS[r][c];
+            }
+
+            const aiPotentialMoves = getAllValidMoves(aiColor, currentBoard).length;
+            const playerPotentialMoves = getAllValidMoves(playerColor, currentBoard).length;
+            let mobilityScore = 0;
+            if (aiPotentialMoves + playerPotentialMoves !== 0) mobilityScore = MOBILITY_WEIGHT * (aiPotentialMoves - playerPotentialMoves) / (aiPotentialMoves + playerPotentialMoves);
+
+            const totalPieces = aiPieces + playerPieces;
+            const gamePhaseFactor = totalPieces / (BOARD_SIZE * BOARD_SIZE);
+
+            // Skill-based evaluation strength
+            const evaluationStrength = getEvaluationStrength(difficulty);
+
+            // Apply evaluation strength to different components
+            const adjustedPositionalScore = positionalScore * (0.8 + evaluationStrength * 0.2); // Position awareness improves with skill
+            const adjustedMobilityScore = mobilityScore * evaluationStrength; // Mobility understanding improves with skill
+
+            // Higher skill levels also consider piece difference more accurately
+            const adjustedPieceDiff = pieceDiff * (0.9 + evaluationStrength * 0.1);
+
+            score = (adjustedPositionalScore * (1 - gamePhaseFactor) * POSITIONAL_SCORE_MULTIPLIER) +
+                   (adjustedMobilityScore * (1 - gamePhaseFactor) * MOBILITY_SCORE_MULTIPLIER) +
+                   (adjustedPieceDiff * gamePhaseFactor * PIECE_DIFF_MULTIPLIER);
+
+            return score;
+        }
+
+        // --- UI Updates ---
+        function updateStatus() {
+            if (gameOver) return;
+            const playerText = GameUtils.getPlayerName(currentPlayer);
+            const isPlayerTurn = currentPlayer === playerColor;
+            const turnText = isPlayerTurn ? "Your Turn" : "AI's Turn";
+            let statusHTML = `<span style="display: inline-flex; align-items: center; gap: 8px;">`;
+            const pieceColorClass = currentPlayer === BLACK ? 'black-circle' : 'white-circle';
+            statusHTML += `<span class="score-circle ${pieceColorClass}" style="width:20px; height:20px; box-shadow: 0 1px 2px rgba(0,0,0,0.3);"></span>`;
+            statusHTML += `<strong>${playerText}</strong> - ${turnText}</span>`;
+            DOMUtils.setHTML(statusElement, statusHTML);
+        }
+        function updateScoreboard() {
+            const scores = GameUtils.countPieces();
+            DOMUtils.setText(blackScoreElement, scores.black);
+            DOMUtils.setText(whiteScoreElement, scores.white);
+            DOMUtils.setText(statsBlackScore, scores.black);
+            DOMUtils.setText(statsWhiteScore, scores.white);
+        }
+
+        // Updated to use GameUtils - keeping for backward compatibility
+        function countPieces(currentBoard = board) {
+            return GameUtils.countPieces(currentBoard);
+        }
+        function updateStatisticsPanel() {
+            if (gameAreaDiv.classList.contains('hidden') && !statisticsPanel.classList.contains('active')) return;
+            const scores = countPieces(); const totalPieces = scores.black + scores.white;
+            const boardFilledPercent = totalPieces === 0 ? 0 : totalPieces / (BOARD_SIZE * BOARD_SIZE) * 100;
+            let blackCorners = 0, whiteCorners = 0, blackEdges = 0, whiteEdges = 0;
+            const corners = [[0,0], [0, BOARD_SIZE-1], [BOARD_SIZE-1, 0], [BOARD_SIZE-1, BOARD_SIZE-1]];
+            corners.forEach(([r,c]) => {
+                if (board[r]?.[c] === BLACK) blackCorners++; else if (board[r]?.[c] === WHITE) whiteCorners++;
+            });
+            for (let i = 1; i < BOARD_SIZE - 1; i++) { // Edges excluding corners
+                 if (board[0]?.[i] === BLACK) blackEdges++; else if (board[0]?.[i] === WHITE) whiteEdges++;
+                 if (board[BOARD_SIZE-1]?.[i] === BLACK) blackEdges++; else if (board[BOARD_SIZE-1]?.[i] === WHITE) whiteEdges++;
+                 if (board[i]?.[0] === BLACK) blackEdges++; else if (board[i]?.[0] === WHITE) whiteEdges++;
+                 if (board[i]?.[BOARD_SIZE-1] === BLACK) blackEdges++; else if (board[i]?.[BOARD_SIZE-1] === WHITE) whiteEdges++;
+            }
+            gameStats.blackCorners = blackCorners; gameStats.whiteCorners = whiteCorners;
+            gameStats.blackEdges = blackEdges; gameStats.whiteEdges = whiteEdges;
+            statsFlipped.textContent = gameStats.flippedPieces; statsMoves.textContent = gameStats.movesPlayed;
+            statsBlackCorners.textContent = gameStats.blackCorners; statsWhiteCorners.textContent = gameStats.whiteCorners;
+            statsBlackEdges.textContent = gameStats.blackEdges; statsWhiteEdges.textContent = gameStats.whiteEdges;
+            statsPotentialMoves.textContent = gameOver ? 0 : getAllValidMoves(currentPlayer).length;
+            statsBoardFilled.textContent = `${boardFilledPercent.toFixed(1)}%`;
+            boardFilledProgress.style.width = `${boardFilledPercent}%`;
+            boardFilledProgress.setAttribute('aria-valuenow', boardFilledPercent.toFixed(1));
+        }
+
+        // --- Timer Functions ---
+        function handleTurnTimeout() {
+            isAITurn = false;
+
+            // Show timeout-specific message instead of generic pass message
+            passMessageElement.textContent = "Time's up! Turn passed.";
+            passMessageElement.classList.remove('hidden');
+
+            passCounter++;
+
+            // Switch to opponent player
+            currentPlayer = -currentPlayer;
+
+            const validMoves = getAllValidMoves(currentPlayer);
+
+            if (validMoves.length === 0) {
+                // Opponent also has no valid moves - game over
+                passCounter++;
+                endGame();
+                return;
+            }
+
+            // Opponent has moves - start their turn with fresh timer
+            updateStatus();
+            updateBoardDisplay();
+
+            if (currentPlayer === aiColor) {
+                triggerAIMove();
+            } else {
+                startTurnTimer();
+            }
+        }
+
+        function startTurnTimer() {
+            if (gameOver || timeLimit <= 0 || currentPlayer === aiColor) { turnTimerElement.classList.add('hidden'); return; }
+            turnTimerElement.classList.remove('hidden', 'timer-warning');
+            turnStartTime = Date.now();
+            clearInterval(turnTimerInterval);
+
+            turnTimerInterval = setInterval(() => {
+                const elapsedTime = Math.floor((Date.now() - turnStartTime) / 1000);
+                const remainingTime = timeLimit - elapsedTime;
+
+                if (remainingTime <= 0) {
+                    clearInterval(turnTimerInterval);
+                    turnTimerElement.textContent = "Time's up!";
+                    turnTimerElement.classList.add('timer-warning');
+                    playSound('pass');
+                    isAITurn = true; // Prevent input during forced pass
+
+                    setTimeout(() => {
+                        handleTurnTimeout();
+                    }, TIMER_TIMEOUT_DELAY);
+                } else {
+                    updateTurnTimerDisplay(remainingTime);
+                    if (remainingTime <= TIMER_WARNING_THRESHOLD && remainingTime > 0) {
+                        turnTimerElement.classList.add('timer-warning');
+                    } else {
+                        turnTimerElement.classList.remove('timer-warning');
+                    }
+                }
+            }, TIMER_UPDATE_INTERVAL);
+        }
+        function stopTurnTimer() {
+            clearInterval(turnTimerInterval); turnTimerElement.classList.remove('timer-warning');
+            if (timeLimit > 0 && !gameOver) turnTimerElement.textContent = `Time: ${timeLimit}s`;
+            else if (!gameOver) turnTimerElement.classList.add('hidden');
+        }
+        function updateTurnTimerDisplay(remaining = timeLimit) {
+             if (timeLimit > 0 && !gameOver) {
+                 turnTimerElement.textContent = `Time: ${remaining}s`;
+             }
+        }
+
+        // --- Undo Functionality ---
+        function saveGameState() {
+            const boardCopy = board.map(row => row.slice()); const statsCopy = { ...gameStats };
+            gameStateHistory.push({ board: boardCopy, currentPlayer: currentPlayer, stats: statsCopy,
+                remainingTime: timeLimit > 0 ? Math.max(0, timeLimit - Math.floor((Date.now() - turnStartTime) / 1000)) : null,
+                isAITurn: isAITurn });
+            updateUndoButton();
+        }
+        function undoMove() {
+            if (gameStateHistory.length === 0 || isAITurn) return; playSound('click'); clearHint();
+            stopTurnTimer(); isAITurn = false; svg.classList.remove('ai-thinking');
+            const previousState = gameStateHistory.pop();
+            if (previousState) {
+                 board = previousState.board; currentPlayer = previousState.currentPlayer; gameStats = previousState.stats;
+                 stopTurnTimer();
+                 if (previousState.remainingTime !== null) {
+                     turnStartTime = Date.now() - (timeLimit - previousState.remainingTime) * 1000;
+                     updateTurnTimerDisplay(previousState.remainingTime);
+                 } else turnTimerElement.classList.add('hidden');
+                 isAITurn = previousState.isAITurn; gameOver = false;
+                 endGameMessageElement.classList.add('hidden'); passMessageElement.classList.add('hidden');
+                 updateBoardDisplay(); updateUndoButton();
+                 if (currentPlayer === playerColor && !isAITurn && timeLimit > 0) startTurnTimer();
+                 else if (isAITurn) triggerAIMove(); // If undo made it AI's turn again
+            } else updateUndoButton();
+        }
+        function updateUndoButton() {
+            const canUndo = gameStateHistory.length > 0 && !isAITurn && !gameOver;
+            undoButton.disabled = !canUndo;
+        }
+
+        // --- Hint Functionality ---
+        function showHint() {
+             if (gameOver || isAITurn || currentPlayer !== playerColor) return; playSound('click'); clearHint();
+             const validMoves = getAllValidMoves(playerColor); if (validMoves.length === 0) return;
+             let hintMove = validMoves[0]; // Default
+             const corners = BoardUtils.getCorners();
+             const cornerMoves = validMoves.filter(m => corners.some(c => c[0] === m.row && c[1] === m.col));
+             if (cornerMoves.length > 0) hintMove = cornerMoves[0];
+             else {
+                 const edgeMoves = validMoves.filter(m => BoardUtils.isEdge(m.row, m.col) && !BoardUtils.isAdjacentToEmptyCorner(m.row, m.col));
+                 if (edgeMoves.length > 0) { edgeMoves.sort((a, b) => b.flips - a.flips); hintMove = edgeMoves[0]; }
+                 else { validMoves.sort((a, b) => b.flips - a.flips); hintMove = validMoves[0]; }
+             }
+             activeHint = { row: hintMove.row, col: hintMove.col }; drawHint();
+        }
+
+        // Updated to use BoardUtils - keeping for backward compatibility
+        function isAdjacentToEmptyCorner(r, c) {
+            return BoardUtils.isAdjacentToEmptyCorner(r, c);
+        }
+        function drawHint() {
+            if (!activeHint) return;
+            const coords = BoardUtils.boardToSvgCoords(activeHint.row, activeHint.col);
+            const hintMarker = createSvgElement('circle', {
+                cx: coords.cx,
+                cy: coords.cy,
+                r: CELL_SIZE * 0.3,
+                class: 'hint-marker',
+                id: 'hint-marker'
+            });
+            svg.appendChild(hintMarker);
+        }
+        function clearHint() {
+            const existingHint = document.getElementById('hint-marker');
+            if (existingHint) existingHint.remove();
+            activeHint = null;
+        }
+
+        // --- UI Interaction ---
+        function handleBoardClick(event) {
+             if (gameOver || isAITurn || currentPlayer !== playerColor) return;
+             // Click might be on cell rect or indicator dot. We need cell coords.
+             let targetElement = event.target;
+             let cellRect = targetElement.closest('.board-cell, .highlight-cell'); // Find the cell rect
+             if (targetElement.classList.contains('valid-move-indicator')) { // Clicked on dot
+                // Find sibling rect or parent's rect if structure changes
+                // Assuming dot is sibling to rect or rect is easily found
+                // This needs robust way to get cell from indicator. For now, assume click on rect.
+                // Better: Add data-row/col to indicator, or get from parent <g> if cells are groups.
+                // Current structure: indicator is sibling. We need the rect.
+                // For now, just ensure click is registered on the rect.
+                // If click is on rect, use its data.
+                // If indicator, this might fail.
+                // Simplest: indicators are pointer-events:none in CSS. Clicks go to rect.
+             }
+            if (!cellRect || (!cellRect.classList.contains('board-cell') && !cellRect.classList.contains('highlight-cell'))) return;
+
+            const row = parseInt(cellRect.dataset.row); const col = parseInt(cellRect.dataset.col);
+            const piecesToFlip = getFlippablePieces(row, col, currentPlayer);
+            if (piecesToFlip.length > 0) makeMove(row, col);
+            else {
+                playSound('error'); cellRect.classList.add('invalid-move-shake');
+                setTimeout(() => cellRect.classList.remove('invalid-move-shake'), 400);
+            }
+        }
+        function resetGameUI() {
+            playSound('click'); stopTurnTimer(); clearHint(); isAITurn = false;
+            DOMUtils.toggleClass(svg, 'ai-thinking', false);
+            initializeGame(); GameUtils.resetStats();
+            DOMUtils.show(setupScreenDiv); DOMUtils.hide(gameAreaDiv);
+            DOMUtils.hide(endGameMessageElement); DOMUtils.hide(passMessageElement);
+            DOMUtils.show(helpButton); hintButton.disabled = false; updateUndoButton();
+            DOMUtils.toggleClass(blackButton, 'selected', false);
+            DOMUtils.toggleClass(whiteButton, 'selected', false);
+        }
+        function startGame() {
+             initializeSounds(); if (Tone.context.state !== 'running') Tone.start().catch(e => console.warn("Tone.start() failed:", e));
+             playSound('start');
+            const selectedColorButton = document.querySelector('#setup-screen button.selected');
+            playerColor = selectedColorButton ? parseInt(selectedColorButton.dataset.color) : BLACK;
+            aiColor = -playerColor; difficultyLevel = parseInt(difficultySelect.value);
+            timeLimit = parseInt(timeLimitSelect.value); soundEnabled = soundToggleCheckbox.checked;
+            showValidMoves = showValidMovesToggle.checked;
+            initializeBoard(); GameUtils.resetStats();
+            DOMUtils.hide(setupScreenDiv); DOMUtils.show(gameAreaDiv);
+            DOMUtils.show(helpButton);
+            drawBoard(); updateStatus(); updateScoreboard(); updateStatisticsPanel(); updateUndoButton();
+            if (playerColor === WHITE) triggerAIMove(); else startTurnTimer();
+        }
+        // Modal functions now use ModalUtils - keeping for backward compatibility
+        function toggleModal(modalElement, show) {
+            const callback = modalElement.id === 'statistics-panel' ? updateStatisticsPanel : null;
+            ModalUtils.toggle(modalElement, show, callback);
+        }
+        // Theme functions now use ThemeUtils - keeping for backward compatibility
+        function toggleTheme() {
+            ThemeUtils.toggle();
+        }
+
+        function loadThemePreference() {
+            ThemeUtils.loadThemePreference();
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadThemePreference();
+            blackButton.addEventListener('click', (e) => { playSound('click'); whiteButton.classList.remove('selected'); e.target.classList.add('selected'); });
+            whiteButton.addEventListener('click', (e) => { playSound('click'); blackButton.classList.remove('selected'); e.target.classList.add('selected'); });
+            startGameButton.addEventListener('click', startGame);
+            resetButton.addEventListener('click', resetGameUI);
+            undoButton.addEventListener('click', undoMove);
+            hintButton.addEventListener('click', showHint);
+            statsButton.addEventListener('click', () => toggleModal(statisticsPanel, true));
+            helpButton.addEventListener('click', () => toggleModal(helpSection, true));
+            closeHelpButton.addEventListener('click', () => toggleModal(helpSection, false));
+            closeStatsButton.addEventListener('click', () => toggleModal(statisticsPanel, false));
+            helpSection.querySelector('.modal-close').addEventListener('click', () => toggleModal(helpSection, false));
+            statisticsPanel.querySelector('.modal-close').addEventListener('click', () => toggleModal(statisticsPanel, false));
+            mainOverlay.addEventListener('click', () => { toggleModal(helpSection, false); toggleModal(statisticsPanel, false); });
+            document.addEventListener('keydown', (e) => {
+                 if (e.key === 'Escape') {
+                     if (helpSection.classList.contains('active')) toggleModal(helpSection, false);
+                     if (statisticsPanel.classList.contains('active')) toggleModal(statisticsPanel, false);
+                 }
+            });
+            themeToggleButton.addEventListener('click', toggleTheme);
+            soundToggleCheckbox.addEventListener('change', (e) => {
+                soundEnabled = e.target.checked;
+                if (soundEnabled && (!moveSynth || Tone.context.state !== 'running')) initializeSounds();
+                playSound('click');
+            });
+            showValidMovesToggle.addEventListener('change', (e) => {
+                 showValidMoves = e.target.checked; playSound('click');
+                 if (!gameAreaDiv.classList.contains('hidden')) updateValidMoveIndicators();
+            });
+            svg.addEventListener('click', handleBoardClick);
+            // svg.addEventListener('touchstart', handleBoardClick, { passive: false }); // Add if needed for mobile
+
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if (entry.target.id === 'game-board' && !gameAreaDiv.classList.contains('hidden')) {
+                        // On resize, we need to reinitialize the board graphics
+                        boardInitialized = false;
+                        drawBoard();
+                    }
+                }
+            });
+            resizeObserver.observe(svg);
+        });
+    </script>
+</body>
+</html>
